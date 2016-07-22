@@ -14,10 +14,39 @@ module.exports = (app, passport) => {
     res.render('login.ejs');
   });
 
-  app.get('/profile', (req, res) => {
-    res.render('profile.ejs', {
-    });
+  function requireLogin (req, res, next) {
+    if (!req.user) {
+      res.redirect('/login');
+    } else {
+      next();
+    }
+  };
+
+  app.get('/profile', requireLogin, (req, res) => {
+    res.render('profile.ejs');
   });
+  app.use( (req, res, next) => {
+    if (req.session && req.session.user) {
+      connection.query('SELECT * FROM users WHERE username = ?', [req.session.user.email], (err, user) => {
+        if (err) {
+          console.log('Aici crapa ' + err);
+          return;
+        }
+        if (user) {
+          req.user = user;
+          delete req.user.password;
+          req.session.user = user;
+
+          // req.locals.user = user;
+        }
+        next();
+      });
+    } else {
+      next();
+    }
+  });
+
+
 
   app.post('/signup', passport.authenticate('local-signup', {
     successRedirect: '/login',
@@ -105,6 +134,7 @@ module.exports = (app, passport) => {
 
 
   app.get('/logout', (req, res) => {
+    req.session.destroy();
     req.logout();
     res.redirect('/');
   });

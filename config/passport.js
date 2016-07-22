@@ -21,6 +21,7 @@ module.exports = (passport) => {
     passReqToCallback: true
   },
   (req, email, password, done) => {
+
     connection.query('SELECT * FROM users WHERE username = ?', [email], (err, rows) => {
       if (err) {
         return done(err);
@@ -28,12 +29,12 @@ module.exports = (passport) => {
       if (rows.length) {
         return done(null, false);
       } else {
+        let salt = bcrypt.genSaltSync(5);
+        let securedPassword = bcrypt.hashSync(password, salt);
         let newUser = {
           username: email,
-          password: password
+          password: securedPassword
         };
-        let salt = bcrypt.genSaltSync(5);
-        let securedPassword = bcrypt.hashSync(newUser.password, salt);
         connection.query(`INSERT INTO users (username, password) VALUES ('${newUser.username}','${securedPassword}');`, (insertError) => {
           if (insertError) {
             return done(insertError);
@@ -54,6 +55,7 @@ module.exports = (passport) => {
       if (err) {
         return done(err);
       }
+
       /*
       The purpose of a verify callback is to find the user that possesses a set of credentials.
       If the credentials are not valid (for example, if the password is incorrect),
@@ -68,6 +70,7 @@ module.exports = (passport) => {
       /*
       If the credentials are valid, the verify callback invokes done to supply Passport with the user that authenticated.
       */
+      req.session.user = JSON.stringify(rows[0]);
       return done(null, rows[0]);
     });
   })
