@@ -1,5 +1,17 @@
 'use strict';
 
+function successHandler (jsonData) {
+  $('#output');
+  let fullData = '';
+  fullData += JSON.stringify(jsonData, null, 2);
+  $('#output').html('JSON content of the requested page:\n' + fullData);
+};
+
+function generalErrorHandler (xhr) {
+  alert('Status code: ' + xhr.status + ' Reason: ' + xhr.statusText + '\n');
+};
+
+window.history.forward(1);
 $(document).ready( () => {
   $('#get').click(() => {
     let id = $('#getId').val();
@@ -7,25 +19,10 @@ $(document).ready( () => {
       type:        'GET',
       url:         'http://localhost:3000/profile/catalog/' + id,
       contentType: 'application/json; charset=UTF-8',
-      success:     (jd) => {
-        $('#output');
-        let fullData = '';
-        fullData += JSON.stringify(jd, null, 2);
-        $('#output').html('JSON content of the requested page:\n' + fullData);
-      },
-      error: (xhr) => {
-        let error;
-        try {
-          error = JSON.parse(xhr.responseText);
-        } catch (e) {
-          console.log(e);
-          error = {};
-        }
-        alert(xhr.status + ' ' + xhr.statusText + '\n' + error.reason);
-      }
-    });
+    })
+    .done(successHandler)
+    .fail(generalErrorHandler);
   });
-
 
   $('#post').click(() => {
     let jsonData;
@@ -36,31 +33,17 @@ $(document).ready( () => {
       alert(e);
       jsonData = {};
     }
-    $.ajax({
+    let postPromise = $.ajax({
       type:        'POST',
       url:         'http://localhost:3000/profile/catalog/',
       data:        JSON.stringify(jsonData),
       contentType: 'application/json; charset=UTF-8',
-      dataType:    'json',
-      success:     (jd) => {
-        $('#output');
-        let fullData = '';
-        fullData += JSON.stringify(jd, null, 2);
-        $('#output').html('JSON content of the requested page:\n' + fullData);
-      },
-      error: (xhr) => {
-        let error;
-        try {
-          error = JSON.parse(xhr.responseText);
-        } catch (e) {
-          console.log(e);
-          error = {};
-        }
-        alert(xhr.status + ' ' + xhr.statusText + '\n' + error.reason);
-      }
+      dataType:    'json'
     });
+    postPromise
+      .done(successHandler)
+      .fail(generalErrorHandler);
   });
-
 
   $('#put').click(() => {
     let id = $('#getId').val();
@@ -72,51 +55,27 @@ $(document).ready( () => {
       alert(e);
       jsonData = {};
     }
-    $.ajax({
+    let putPromise = $.ajax({
       type:        'PUT',
       url:         'http://localhost:3000/profile/catalog/' + id,
       data:        JSON.stringify(jsonData),
       contentType: 'application/json; charset=UTF-8',
-      dataType:    'json',
-      success:     (jd) => {
-        $('#ouput');
-        let fullData = '';
-        fullData += JSON.stringify(jd, null, 2);
-        $('#output').html(fullData);
-      },
-      error: (xhr) => {
-        let parsedError;
-        try {
-          parsedError = JSON.parse(xhr.responseText);
-        } catch (e) {
-          console.log(e);
-          parsedError = {};
-        }
-        alert(xhr.status + ' ' + xhr.statusText + '\n' + parsedError.reason);
-      }
+      dataType:    'json'
     });
+    putPromise
+      .done(successHandler)
+      .fail(generalErrorHandler);
   });
 
   $('#delete').click(() => {
     let id = $('#getId').val();
-    $.ajax({
+    let deletePromise = $.ajax({
       type:        'DELETE',
       url:         'http://localhost:3000/profile/catalog/' + id,
-      contentType: 'application/json; charset=UTF-8',
-      success:     () => {
-        $('#output');
-        $('#output').html('To see updated JSON after delete, make GET request!');
-      },
-      error: (xhr) => {
-        let error;
-        try {
-          error = JSON.parse(xhr.responseText);
-        } catch (e) {
-          console.log(e);
-          error = {};
-        }
-        alert(xhr.status + ' ' + xhr.statusText + '\n' + error.reason);
-      }
+      contentType: 'application/json; charset=UTF-8'
     });
+    deletePromise
+      .done(successHandler)
+      .fail(generalErrorHandler);
   });
 });
