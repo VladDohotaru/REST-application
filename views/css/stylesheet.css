@@ -1,0 +1,29 @@
+html, body {
+    font-family: 'Montserrat',sans-serif;
+    padding-top:80px; word-wrap:break-word;
+}
+
+h1 {
+  border-left: 2px ;
+  font-size: 48px;
+  font-weight: 400px;
+  padding-left: 20px;
+}
+
+#stage textarea {
+  height: 100px;
+  width: 800px;
+}
+.main {
+  margin-top: 80px;
+}
+
+button.btn {
+  background: transparent;
+  border:  2px solid #808080; /* Green */
+  color: #808080;
+  cursor: pointer;
+  font-size: 36px;
+  padding: 20px 24px;
+  transition: background 2s, color 2s;
+}
