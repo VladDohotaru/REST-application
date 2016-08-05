@@ -2,6 +2,11 @@
 
 const Sequelize = require('sequelize');
 const productOptions = {
+  productId: {
+    type:       Sequelize.INTEGER,
+    unique:     true,
+    primaryKey: true
+  },
   productTitle: {
     type:      Sequelize.STRING,
     unique:    true,

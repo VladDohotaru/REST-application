@@ -1,6 +1,9 @@
 'use strict';
 const Model = require('../config/models/model.js');
 const promise = Model.Product;
+const userPromise = Model.User;
+
+
 module.exports = ( router, passport) => {
 
   router.get('/', (req, res) => {
@@ -23,12 +26,24 @@ module.exports = ( router, passport) => {
     }
   };
 
-  router.get('/profile', requireLogin, (req, res) => {
-    res.render('profile.ejs');
+  function isAdmin ( req, res, next) {
+    if ('admin' === req.user.group) {
+      next();
+    } else {
+      res.redirect('/user_profile');
+    }
+  };
+
+  router.get('/admin_profile', requireLogin, isAdmin, (req, res) => {
+    res.render('AdminProfile.ejs');
+  });
+
+  router.get('/user_profile', (req, res) => {
+    res.render('user_profile.ejs');
   });
 
 
-  router.get('/profile/catalog/', (req, res) => {
+  router.get('/catalog/', (req, res) => {
     promise
       .findAll()
       .then((content) => {
@@ -37,63 +52,69 @@ module.exports = ( router, passport) => {
       })
       .catch((getError) => {
         console.log(getError);
+        res.status(406);
+        res.end();
         return getError;
       });
   });
 
-  router.get('/profile/catalog/*', (req, res) => {
+  router.get('/admin_profile/users/', (req, res) => {
+    userPromise
+      .findAll()
+      .then((usersList) => {
+        res.json(usersList);
+        res.status(200).end();
+      })
+      .catch((getUsersError) => {
+        console.log(getUsersError);
+        res.status(406);
+        res.end();
+        return getUsersError;
+      });
+  });
+
+  router.get('/catalog/*', (req, res) => {
     let idToGet = req.params[0];
     promise
       .findOne({
         where: {
-          id: idToGet
+          productId: idToGet
         }
       })
       .then((foundRecord) => {
         if (foundRecord) {
-          res.status(200);
-          res.json(foundRecord).end();
+          res.json(foundRecord);
+          res.status(200).end();
         } else {
-          res.status(404);
-          res.json({operation: 'GET', status: 'fail',reason: 'can not found record with given id'}).end();
+          res.json({operation: 'GET', status: 'fail',reason: 'can not found record with given id'});
+          res.status(404).end();
         }
       })
       .catch((getError) => {
         console.log(getError);
-        res.status(500);
-        res.json({operation: 'GET', status: 'fail',reason: 'internal DB error'}).end();
+        res.json({operation: 'GET', status: 'fail',reason: 'internal DB error: ' + getError});
+        res.status(500).end();
       });
   });
 
-  router.post('/profile/catalog/*', (req, res) => {
-    let idToPost = req.params[0];
+  router.post('/admin_profile/catalog/', (req, res) => {
     let contentToPost = req.body;
     promise
-      .findOne({
-        where: {
-          id: idToPost
-        }
+      .create(contentToPost)
+      .then( () => {
+        res.json({operation: 'POST', status: 'success'});
+        res.status(200).end();
       })
-      .then((content) => {
-        console.log(content);
-        if (!content) {
-          promise
-          .create(contentToPost);
-          res.status(200);
-          res.json({operation: 'POST', status: 'success'}).end();
-        } else {
-          res.status(401);
-          res.json({operation: 'POST', status: 'fail',reason: 'existing ID'}).end();
-        }
-      })
-      .catch((postError) => {
-        console.log(postError);
-        return postError;
+      .catch((err) => {
+        console.log(err);
+        res.json({operation: 'POST', status: 'fail',reason: 'Constraits violation ' + err});
+        res.status(406).end();
       });
   });
 
 
-  router.put('/profile/catalog/*', (req, res) => {
+
+  router.put('/admin_profile/catalog/*', (req, res) => {
     let recordToPut = req.body;
     let idToPut = req.params[0];
     promise
@@ -103,43 +124,80 @@ module.exports = ( router, passport) => {
         productDescription: recordToPut.productDescription
       }, {
         where: {
-          id: idToPut
+          productId: idToPut
         }
       })
       .then( (rowsAffected) => {
         if (0 === rowsAffected[0]) {
-          res.status(404);
-          res.json({operation: 'PUT', status: 'fail', reason: 'id not found'}).end();
+          res.json({operation: 'PUT', status: 'fail', reason: 'id not found'});
+          res.statusCode = 404;
         }
+        res.json({operation: 'PUT', status: 'success'});
         res.status(200);
-        res.json({operation: 'PUT', status: 'success'}).end();
       })
       .catch( (updateError) => {
         console.log(updateError);
-        res.json({operation: 'PUT', status: 'fail', reason: 'incorect format of input'}).end();
+        res.json({operation: 'PUT', status: 'fail', reason: 'incorect format of input'});
+        res.status(406);
+        res.end();
         return updateError;
       });
   });
 
-  router.delete('/profile/catalog/*', (req, res) => {
+  router.put('/set_admin', (req, res) => {
+    userPromise
+      .update({
+        group: 'admin'
+      }, {
+        where: {
+          username: req.body.username
+        }
+      })
+      .then( (rowsAffected) => {
+        if (0 === rowsAffected[0]) {
+          res.json({operation: 'PUT', status: 'fail', reason: 'user not found'});
+          res.statusCode = 404;
+        }
+        res.json({operation: 'User is admin now', status: 'success'});
+        res.status(200);
+      })
+      .catch((error) => {
+        res.json({operation: 'Make admin', status: 'fail' + error});
+        res.status(406);
+      });
+  });
+
+  router.put('/shopping_cart', (req, res) => {
+    console.log(req);
+    res.end();
+  })
+
+  router.delete('/admin_profile/catalog/*', (req, res) => {
     let idToDelete = req.params[0];
     promise
       .destroy({
         where: {
-          id: idToDelete
+          productId: idToDelete
         }
       })
       .then((rowsAffected) => {
         if (0 === rowsAffected) {
-          res.status(406);
-          res.json({operation: 'DELETE', status: 'fail'}).end();
+          res.json({operation: 'DELETE', status: 'fail'});
+          res.status(406).end();
         }
-        res.status(200);
-        res.json({operation: 'DELETE', status: 'success'}).end();
+        res.json({operation: 'DELETE', status: 'success'});
+        res.status(200).end();
       })
-      .catch( (deleteError) => {
-        console.log(deleteError);
+      .catch( (deleteProductError) => {
+        console.log(deleteProductError);
+        return deleteProductError;
       });
+  });
+
+  router.get('/logout', (req, res) => {
+    req.session.destroy();
+    req.logout();
+    res.redirect('/');
   });
 
   router.post('/signup', passport.authenticate('local-signup', {
@@ -148,10 +206,16 @@ module.exports = ( router, passport) => {
     failureFlash:    false
   }));
 
-  router.post('/login', passport.authenticate('local-login', {
-    successRedirect: '/profile',
+  router.post('/login', passport.authenticate('user-login', {
+    successRedirect: '/admin_profile',
     failureRedirect: '/login',
     failureFlash:    false
   }));
 
+  router.get('/auth/facebook', passport.authenticate('facebook-login', {scope: 'email'}));
+
+  router.get('/auth/facebook/callback', passport.authenticate('facebook-login', {
+    successRedirect: '/user_profile',
+    failureRedirect: '/'
+  }));
 };

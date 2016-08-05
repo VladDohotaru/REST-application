@@ -6,6 +6,7 @@ const Model = require('./models/model.js');
 const encryption = require('./passwordEncryption.js');
 const passwordCheck = require('./passwordCheck.js');
 const userPromise = Model.User;
+const fbAuth = Model.fbAuth;
 
 module.exports = (passport) => {
 
@@ -45,7 +46,7 @@ module.exports = (passport) => {
 );
 
 
-  passport.use('local-login', new LocalStrategy(optionsOverride,
+  passport.use('user-login', new LocalStrategy(optionsOverride,
     (req, email, password, done) => {
       userPromise
         .findOne({
@@ -68,5 +69,53 @@ module.exports = (passport) => {
         });
     })
   );
+
+  const facebookOptions = {
+    clientID:          '218647501867726',
+    clientSecret:      'c3f73a4249e0e447cf1cb7880f36b11c',
+    callbackURL:       'http://localhost:3000/auth/facebook/callback',
+    passReqToCallback: true,
+    profileFields:     ['id', 'emails', 'name']
+  };
+  passport.use('facebook-login', new FacebookStrategy(facebookOptions,
+  (token, refreshToken, profile, done) => {
+    process.nextTick( () => {
+      console.log(JSON.stringify(profile) + '    iacatalai');
+      fbAuth
+        .findOne({
+          where: {
+            fbId: profile.id
+          }
+        })
+        .then((selectedUser) => {
+          if (selectedUser) {
+            return done(null, selectedUser);
+          } else {
+            let newUser = {
+              id:    profile.id,
+              token: token,
+              name:  profile.name.givenName + ' ' + profile.name.familyName,
+              email: profile.emails.value
+            };
+            fbAuth
+            .create(newUser)
+            .then(() => {
+              if (!newUser) {
+                return done(null, false);
+              }
+              return done(null, newUser);
+            })
+            .catch( (facebookAuthError) => {
+              console.log(facebookAuthError);
+              return done(facebookAuthError);
+            });
+          }
+        })
+        .catch((selectError) => {
+          console.log('IHAAAAAAAAAAAAA');
+          return done(selectError);
+        });
+    });
+  }));
 
 };
