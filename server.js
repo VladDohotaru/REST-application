@@ -11,6 +11,7 @@ const Model = require('./config/models/model.js');
 const createProductTable = Model.Product;
 const createUsersTable = Model.User;
 const createfbAuthTable = Model.fbAuth;
+const http = require('http');
 
 /* configurarea aplicatiei express */
 app.set('view engine', 'ejs');
@@ -44,8 +45,12 @@ require('./config/passport.js')(passport, session);
 /* import rutele cu autentificarea configurata */
 require('./app/routes.js')( router, passport);
 
-
 /* pornesc serverul */
 let port = process.env.PORT || 3000;
-app.listen(port);
-console.log('Server started on port ' + port);
+var server = http.createServer(app);
+server.listen(port, () => {
+  console.log('Huiak so pornit');
+});
+
+
+module.exports = app;

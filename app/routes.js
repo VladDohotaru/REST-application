@@ -2,10 +2,10 @@
 const Model = require('../config/models/model.js');
 const promise = Model.Product;
 const userPromise = Model.User;
-
+const isAdmin = require('./isAdmin.js');
+const requireLogin = require('./requireLogin.js');
 
 module.exports = ( router, passport) => {
-
   router.get('/', (req, res) => {
     res.render('index.ejs');
   });
@@ -15,31 +15,16 @@ module.exports = ( router, passport) => {
   });
 
   router.get('/login', (req, res) => {
+    console.log('huiak');
     res.render('login.ejs');
-  });
-
-  function requireLogin (req, res, next) {
-    if (!req.user) {
-      res.redirect('/login');
-    } else {
-      next();
-    }
-  };
-
-  function isAdmin ( req, res, next) {
-    if ('admin' === req.user.group) {
-      next();
-    } else {
-      res.redirect('/user_profile');
-    }
-  };
-
-  router.get('/admin_profile', requireLogin, isAdmin, (req, res) => {
-    res.render('AdminProfile.ejs');
   });
 
   router.get('/user_profile', (req, res) => {
     res.render('user_profile.ejs');
+  });
+
+  router.get('/admin_profile', requireLogin, isAdmin, (req, res) => {
+    res.render('AdminProfile.ejs');
   });
 
 
@@ -75,6 +60,7 @@ module.exports = ( router, passport) => {
 
   router.get('/catalog/*', (req, res) => {
     let idToGet = req.params[0];
+    console.log(idToGet);
     promise
       .findOne({
         where: {
@@ -112,6 +98,10 @@ module.exports = ( router, passport) => {
       });
   });
 
+  router.post('/admin_profile/catalog/\d', (req, res) => {
+    res.json({operation: 'POST', status: 'fail',reason: 'Constraits violation '});
+    res.status(401).end();
+  });
 
 
   router.put('/admin_profile/catalog/*', (req, res) => {
@@ -167,11 +157,6 @@ module.exports = ( router, passport) => {
       });
   });
 
-  router.put('/shopping_cart', (req, res) => {
-    console.log(req);
-    res.end();
-  })
-
   router.delete('/admin_profile/catalog/*', (req, res) => {
     let idToDelete = req.params[0];
     promise
@@ -210,12 +195,5 @@ module.exports = ( router, passport) => {
     successRedirect: '/admin_profile',
     failureRedirect: '/login',
     failureFlash:    false
-  }));
-
-  router.get('/auth/facebook', passport.authenticate('facebook-login', {scope: 'email'}));
-
-  router.get('/auth/facebook/callback', passport.authenticate('facebook-login', {
-    successRedirect: '/user_profile',
-    failureRedirect: '/'
   }));
 };
