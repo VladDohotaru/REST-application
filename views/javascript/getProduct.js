@@ -3,7 +3,7 @@ $('#getProducts').click(() => {
   const id = $('#getId').val();
   const getOptions = {
     type:        'GET',
-    url:         'http://localhost:3000/catalog/' + id,
+    url:         'http://localhost:3000/admin_profile/catalog/' + id,
     contentType: 'application/json; charset=UTF-8',
     success:     (result) => {
       $('#output').empty();

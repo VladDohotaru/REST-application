@@ -30,6 +30,6 @@
   },
   "scripts": {
     "eslint": "node_modules\\.bin\\eslint index.js config/*.js test/*.js app/*.js",
-    "test": "node node_modules/moonraker/bin/moonraker"
+    "test": "mocha test-runner.js  "
   }
 }

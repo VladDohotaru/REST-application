@@ -28,7 +28,22 @@ module.exports = ( router, passport) => {
   });
 
 
-  router.get('/catalog/', (req, res) => {
+  router.get('/admin_profile/catalog/', (req, res) => {
+    promise
+      .findAll()
+      .then((content) => {
+        res.status(200);
+        res.json(content).end();
+      })
+      .catch((getError) => {
+        console.log(getError);
+        res.status(406);
+        res.end();
+        return getError;
+      });
+  });
+
+  router.get('/user_profile/catalog/', (req, res) => {
     promise
       .findAll()
       .then((content) => {
@@ -58,7 +73,33 @@ module.exports = ( router, passport) => {
       });
   });
 
-  router.get('/catalog/*', (req, res) => {
+  router.get('/admin_profile/catalog/*', (req, res) => {
+    let idToGet = req.params[0];
+    console.log(idToGet);
+    promise
+      .findOne({
+        where: {
+          productId: idToGet
+        }
+      })
+      .then((foundRecord) => {
+        if (foundRecord) {
+          res.status(200);
+          res.json(foundRecord).end();
+        } else {
+          res.status(404);
+          res.json({operation: 'GET', status: 'fail',reason: 'can not found record with given id'});
+          res.end();
+        }
+      })
+      .catch((getError) => {
+        console.log(getError);
+        res.json({operation: 'GET', status: 'fail',reason: 'internal DB error: ' + getError});
+        res.status(500).end();
+      });
+  });
+
+  router.get('/user_profile/catalog/*', (req, res) => {
     let idToGet = req.params[0];
     console.log(idToGet);
     promise
@@ -72,8 +113,7 @@ module.exports = ( router, passport) => {
           res.json(foundRecord);
           res.status(200).end();
         } else {
-          res.json({operation: 'GET', status: 'fail',reason: 'can not found record with given id'});
-          res.status(404).end();
+          res.json({operation: 'GET', status: 'fail',reason: 'can not found record with given id'}).status(404).end();
         }
       })
       .catch((getError) => {
@@ -98,9 +138,9 @@ module.exports = ( router, passport) => {
       });
   });
 
-  router.post('/admin_profile/catalog/\d', (req, res) => {
-    res.json({operation: 'POST', status: 'fail',reason: 'Constraits violation '});
-    res.status(401).end();
+  router.post('/admin_profile/catalog/*', (req, res) => {
+    res.status(406);
+    res.json({operation: 'POST', status: 'fail',reason: 'You can not overwrite an existent id'}).end();
   });
 
 
@@ -167,11 +207,9 @@ module.exports = ( router, passport) => {
       })
       .then((rowsAffected) => {
         if (0 === rowsAffected) {
-          res.json({operation: 'DELETE', status: 'fail'});
-          res.status(406).end();
+          res.status(406).json({operation: 'DELETE', status: 'fail'}).end();
         }
-        res.json({operation: 'DELETE', status: 'success'});
-        res.status(200).end();
+        res.json({operation: 'DELETE', status: 'success'}).status(200).end();
       })
       .catch( (deleteProductError) => {
         console.log(deleteProductError);
