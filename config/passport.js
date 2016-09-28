@@ -53,7 +53,6 @@ module.exports = (passport) => {
           }
         })
         .then((user) => {
-          // console.log(JSON.stringify(user) + '  IACA USERU BLEADI');
           if (!user) {
             return done(null, false);
           }

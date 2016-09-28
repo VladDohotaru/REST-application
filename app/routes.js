@@ -1,9 +1,13 @@
 'use strict';
+
 const Model = require('../config/models/model.js');
 const promise = Model.Product;
 const userPromise = Model.User;
+const shoppingCartPromise = Model.ShoppingCart;
 const isAdmin = require('./isAdmin.js');
 const requireLogin = require('./requireLogin.js');
+const getProductById = require('./getProductById.js');
+const connection = require('../config/db.js').connection;
 
 module.exports = ( router, passport) => {
   router.get('/', (req, res) => {
@@ -15,7 +19,6 @@ module.exports = ( router, passport) => {
   });
 
   router.get('/login', (req, res) => {
-    console.log('huiak');
     res.render('login.ejs');
   });
 
@@ -26,7 +29,6 @@ module.exports = ( router, passport) => {
   router.get('/admin_profile', requireLogin, isAdmin, (req, res) => {
     res.render('AdminProfile.ejs');
   });
-
 
   router.get('/admin_profile/catalog/', (req, res) => {
     promise
@@ -75,54 +77,18 @@ module.exports = ( router, passport) => {
 
   router.get('/admin_profile/catalog/*', (req, res) => {
     let idToGet = req.params[0];
-    console.log(idToGet);
-    promise
-      .findOne({
-        where: {
-          productId: idToGet
-        }
-      })
-      .then((foundRecord) => {
-        if (foundRecord) {
-          res.status(200);
-          res.json(foundRecord).end();
-        } else {
-          res.status(404);
-          res.json({operation: 'GET', status: 'fail',reason: 'can not found record with given id'});
-          res.end();
-        }
-      })
-      .catch((getError) => {
-        console.log(getError);
-        res.json({operation: 'GET', status: 'fail',reason: 'internal DB error: ' + getError});
-        res.status(500).end();
-      });
+    getProductById(idToGet, res);
   });
 
   router.get('/user_profile/catalog/*', (req, res) => {
     let idToGet = req.params[0];
-    console.log(idToGet);
-    promise
-      .findOne({
-        where: {
-          productId: idToGet
-        }
-      })
-      .then((foundRecord) => {
-        if (foundRecord) {
-          res.json(foundRecord);
-          res.status(200).end();
-        } else {
-          res.json({operation: 'GET', status: 'fail',reason: 'can not found record with given id'}).status(404).end();
-        }
-      })
-      .catch((getError) => {
-        console.log(getError);
-        res.json({operation: 'GET', status: 'fail',reason: 'internal DB error: ' + getError});
-        res.status(500).end();
-      });
+    getProductById(idToGet, res);
   });
 
+  router.get('/download/JAlarm.jar', (req, res) => {
+    console.log(__dirname);
+    res.sendFile('JAlarm.jar', {root: __dirname});
+  });
   router.post('/admin_profile/catalog/', (req, res) => {
     let contentToPost = req.body;
     promise
@@ -142,7 +108,6 @@ module.exports = ( router, passport) => {
     res.status(406);
     res.json({operation: 'POST', status: 'fail',reason: 'You can not overwrite an existent id'}).end();
   });
-
 
   router.put('/admin_profile/catalog/*', (req, res) => {
     let recordToPut = req.body;
@@ -174,7 +139,7 @@ module.exports = ( router, passport) => {
       });
   });
 
-  router.put('/set_admin', (req, res) => {
+  router.put('/admin_profile/users/set_admin', (req, res) => {
     userPromise
       .update({
         group: 'admin'
@@ -195,6 +160,33 @@ module.exports = ( router, passport) => {
         res.json({operation: 'Make admin', status: 'fail' + error});
         res.status(406);
       });
+  });
+
+  router.put('/admin_profile/add_to_cart', requireLogin, (req, res) => {
+    let id = req.body.id;
+    console.log(id,typeof id, req.user.username);
+    promise
+    .findOne({
+      where: {
+        productId: id
+      }
+    })
+    .then((foundRecord) => {
+      shoppingCartPromise
+      .create({
+        username:     req.user.username,
+        productTitle: foundRecord.productTitle,
+        productPrice: foundRecord.productPrice,
+      })
+      .catch((error) => {
+        res.json({operation: 'add to cart', status: 'fail' + error});
+        res.status(406);
+      });
+    });
+  });
+
+  router.get('/admin_profile/myShoppingCart',requireLogin, (req, res) => {
+    res.status(200);
   });
 
   router.delete('/admin_profile/catalog/*', (req, res) => {

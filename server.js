@@ -10,7 +10,7 @@ const morgan = require('morgan'); // pentru log-uri
 const Model = require('./config/models/model.js');
 const createProductTable = Model.Product;
 const createUsersTable = Model.User;
-const createfbAuthTable = Model.fbAuth;
+const createShoppingCart = Model.ShoppingCart;
 const http = require('http');
 
 /* configurarea aplicatiei express */
@@ -36,7 +36,7 @@ createUsersTable
   .sync({
     logging: console.log
   });
-createfbAuthTable
+createShoppingCart
   .sync({
     logging: console.log
   });

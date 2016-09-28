@@ -1,25 +1,6 @@
 'use strict';
 
 const Sequelize = require('sequelize');
-
-const fbOptions = {
-  fbId: {
-    type:       Sequelize.STRING,
-    unique:     true,
-    primaryKey: true
-  },
-  fbToken: {
-    type:   Sequelize.STRING,
-    unique: true,
-  },
-  fbName: {
-    type:   Sequelize.STRING,
-    unique: true,
-  },
-  fbEmail: {
-    type:   Sequelize.STRING,
-    unique: true,
-  }};
 const userOptions = {
   username: {
     type:      Sequelize.STRING,
@@ -49,5 +30,4 @@ const userOptions = {
   }
 };
 
-module.exports.fbOptions = fbOptions;
 module.exports.userOptions = userOptions;
