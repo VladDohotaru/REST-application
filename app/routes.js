@@ -7,19 +7,18 @@ const shoppingCartPromise = Model.ShoppingCart;
 const isAdmin = require('./isAdmin.js');
 const requireLogin = require('./requireLogin.js');
 const getProductById = require('./getProductById.js');
-const connection = require('../config/db.js').connection;
-
-module.exports = ( router, passport) => {
+// const connection = require('../config/db.js').connection;
+module.exports = (router, passport) => {
   router.get('/', (req, res) => {
     res.render('index.ejs');
   });
 
-  router.get('/signup', (req, res) => {
-    res.render('signup.ejs');
-  });
-
   router.get('/login', (req, res) => {
     res.render('login.ejs');
+  });
+
+  router.get('/signup', (req, res) => {
+    res.render('signup.ejs');
   });
 
   router.get('/user_profile', (req, res) => {
@@ -85,9 +84,9 @@ module.exports = ( router, passport) => {
     getProductById(idToGet, res);
   });
 
-  router.get('/download/JAlarm.jar', (req, res) => {
+  router.get('/download/JAlarm.zip', (req, res) => {
     console.log(__dirname);
-    res.sendFile('JAlarm.jar', {root: __dirname});
+    res.sendFile('JAlarm.zip', {root: './views'});
   });
   router.post('/admin_profile/catalog/', (req, res) => {
     let contentToPost = req.body;
@@ -215,15 +214,15 @@ module.exports = ( router, passport) => {
     res.redirect('/');
   });
 
-  router.post('/signup', passport.authenticate('local-signup', {
-    successRedirect: '/login',
-    failureRedirect: '/signup',
+  router.post( '/login', passport.authenticate('user-login', {
+    successRedirect: '/admin_profile',
+    failureRedirect: '/login',
     failureFlash:    false
   }));
 
-  router.post('/login', passport.authenticate('user-login', {
-    successRedirect: '/admin_profile',
-    failureRedirect: '/login',
+  router.post('/signup', passport.authenticate('local-signup', {
+    successRedirect: '/login',
+    failureRedirect: '/signup',
     failureFlash:    false
   }));
 };
